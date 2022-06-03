@@ -1,6 +1,3 @@
-from typing import Final
-
-
 class InfoMessage:
     """Информационное сообщение о тренировке."""
     def __init__(self,
@@ -19,16 +16,16 @@ class InfoMessage:
     def get_message(self) -> str:
         message = (f'Тип тренировки: {self.training_type}; '
                    f'Длительность: {self.duration:0.3f} ч.; '
-                   f'Дистанция: {self.distance:.3} км;')
+                   f'Дистанция: {self.distance:.3f} км;')
         return message
 
 
 class Training:
     """Базовый класс тренировки."""
 
-    LEN_STEP: float = 0.65
-    M_IN_KM: Final = 1000
-    MIN_IN_HOUR: Final = 60
+    LEN_STEP = 0.65
+    M_IN_KM = 1000
+    MIN_IN_HOUR = 60
 
     def __init__(self,
                  action: int,  # количество совершённых действий
