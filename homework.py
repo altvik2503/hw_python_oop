@@ -68,9 +68,9 @@ class Running(Training):
         coeff_calorie_1 = 18
         coeff_calorie_2 = 20
         duration_in_min = self.duration * self.MIN_IN_HOUR
-        spent_calories = (coeff_calorie_1
-                          * self.get_mean_speed()
-                          - coeff_calorie_2
+        spent_calories = ((coeff_calorie_1
+                           * self.get_mean_speed()
+                           - coeff_calorie_2)
                           * self.weight
                           / self.M_IN_KM
                           * duration_in_min)
@@ -112,16 +112,16 @@ class Swimming(Training):
                  action: int,  # количество совершённых действий
                  duration: float,  # длительность тренировки
                  weight: float,  # вес спортсмена
-                 lenght_pool: float,  # длина бассейна
+                 length_pool: float,  # длина бассейна
                  count_pool: float  # количество проплытых бассейнов
                  ) -> None:
         super().__init__(action, duration, weight)
-        self.lenght_pool = lenght_pool
+        self.length_pool = length_pool
         self.count_pool = count_pool
 
     def get_mean_speed(self) -> float:
         """Получить среднюю скорость движения."""
-        full_length_pool = self.lenght_pool * self.count_pool
+        full_length_pool = self.length_pool * self.count_pool
         mean_speed = full_length_pool / self.M_IN_KM / self.duration
         return mean_speed
 
@@ -167,7 +167,8 @@ def read_package(workout_type: str, data: list) -> Training:
 def main(training: Training) -> None:
     """Главная функция."""
     info = training.show_training_info()
-    print(info.get_message())
+    message = info.get_message()
+    print(message)
 
 
 if __name__ == '__main__':
