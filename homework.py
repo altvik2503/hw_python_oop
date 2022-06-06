@@ -48,8 +48,8 @@ class Training:
     M_IN_KM: float = 1000
     MIN_IN_HOUR: float = 60
 
-    def __init__(self, data) -> None:
-        self.action, self.duration, self.weight = data
+    def __init__(self, action, duration, weight) -> None:
+        self.action, self.duration, self.weight = action, duration, weight
 
     def get_distance(self) -> float:
         """Получить дистанцию в км."""
@@ -111,9 +111,9 @@ class SportsWalking(Training):
     COEFF_CALORIE_1: float = 0.035
     COEFF_CALORIE_2: float = 0.029
 
-    def __init__(self, data) -> None:
-        super().__init__(data[:3])
-        self.height = data[3]
+    def __init__(self, action, duration, weight, height) -> None:
+        super().__init__(action, duration, weight)
+        self.height = height
 
     def get_spent_calories(self) -> float:
         """Получить количество затраченных калорий."""
@@ -142,9 +142,10 @@ class Swimming(Training):
     COEFF_MEAN_SPEED_1: float = 1.1
     COEFF_MEAN_SPEED_2: float = 2
 
-    def __init__(self, data) -> None:
-        super().__init__(data[:3])
-        self.length_pool, self.count_pool = data[3:]
+    def __init__(self, action, duration, weight,
+                 length_pool, count_pool) -> None:
+        super().__init__(action, duration, weight)
+        self.length_pool, self.count_pool = length_pool, count_pool
 
     def get_mean_speed(self) -> float:
         """Получить среднюю скорость движения."""
@@ -170,7 +171,7 @@ def read_package(workout_type: str,
         'WLK': SportsWalking
     }
     try:
-        training = workout_types[workout_type](data)
+        training = workout_types[workout_type](*data)
         return training
     except KeyError:
         print(f'Несуществующий тип тренировки: ""{workout_type}""')
