@@ -1,5 +1,14 @@
 from dataclasses import dataclass
 from typing import ClassVar
+from typing import Dict
+from typing import List
+from typing import Optional
+from typing import Sequence
+from typing import Tuple
+from typing import Type
+
+TrainingData = Tuple[str, Sequence[float]]
+# Тип данных тренировки
 
 
 @dataclass
@@ -11,7 +20,7 @@ class InfoMessage:
     distance: float
     speed: float
     calories: float
-    message: ClassVar[str] = ('Тип тренировки: {:.3f}; '
+    message: ClassVar[str] = ('Тип тренировки: {}; '
                               'Длительность: {:.3f} ч.; '
                               'Дистанция: {:.3f} км; '
                               'Ср. скорость: {:.3f} км/ч; '
@@ -27,20 +36,20 @@ class InfoMessage:
 
 
 class Training:
-    """Базовый класс тренировки."""
+    """Базовый класс тренировки.
+
+    Порядок и назначение аргументов:
+    action -- количество действий
+    duration -- продолжительность
+    weight -- вес спортсмена
+    """
 
     LEN_STEP: float = 0.65
     M_IN_KM: float = 1000
     MIN_IN_HOUR: float = 60
 
-    def __init__(self,
-                 action: int,
-                 duration: float,
-                 weight: float,
-                 ) -> None:
-        self.action = action
-        self.duration = duration
-        self.weight = weight
+    def __init__(self, data) -> None:
+        self.action, self.duration, self.weight = data
 
     def get_distance(self) -> float:
         """Получить дистанцию в км."""
@@ -55,7 +64,8 @@ class Training:
     def get_spent_calories(self) -> float:
         """Получить количество затраченных калорий."""
         raise NotImplementedError(
-            'Определите ""get_spent_calories()"" в %s.' % (self.__class__.__name__))
+            'Определите ""get_spent_calories()"" в %s.'
+            % (self.__class__.__name__))
 
     def show_training_info(self) -> InfoMessage:
         """Вернуть информационное сообщение о выполненной тренировке."""
@@ -81,8 +91,8 @@ class Running(Training):
         """Получить количество затраченных калорий."""
         duration_in_min = self.duration * self.MIN_IN_HOUR
         coeff_mean_speed = (self.get_mean_speed()
-                           * self.COEFF_MEAN_SPEED_1
-                           - self.COEFF_MEAN_SPEED_2)
+                            * self.COEFF_MEAN_SPEED_1
+                            - self.COEFF_MEAN_SPEED_2)
         spent_calories = (coeff_mean_speed
                           * self.weight
                           / self.M_IN_KM
@@ -91,51 +101,50 @@ class Running(Training):
 
 
 class SportsWalking(Training):
-    """Тренировка: спортивная ходьба."""
+    """Тренировка: спортивная ходьба.
 
-    coeff_calorie_1: float = 0.035
-    coeff_calorie_2: float = 0.029
+    Порядок и назначение аргументов:
+    ... -- аргументы базового класса
+    height -- рост спортсмена
+    """
 
-    def __init__(self,
-                 action: int,
-                 duration: float,
-                 weight: float,
-                 height: float
-                 ) -> None:
-        super().__init__(action, duration, weight)
-        self.height = height
+    COEFF_CALORIE_1: float = 0.035
+    COEFF_CALORIE_2: float = 0.029
+
+    def __init__(self, data) -> None:
+        super().__init__(data[:3])
+        self.height = data[3]
 
     def get_spent_calories(self) -> float:
         """Получить количество затраченных калорий."""
         duration_in_min = (self.duration
                            * self.MIN_IN_HOUR)
-        spent_calories = ((self.coeff_calorie_1
+        spent_calories = ((self.COEFF_CALORIE_1
                            * self.weight
                            + self.get_mean_speed()**2
                            // self.height
-                           * self.coeff_calorie_2
+                           * self.COEFF_CALORIE_2
                            * self.weight)
                           * duration_in_min)
         return spent_calories
 
 
 class Swimming(Training):
-    """Тренировка: плавание."""
+    """Тренировка: плавание.
+
+    Порядок и назначение аргументов:
+    ... -- аргументы базового класса
+    length_pool -- длина бассейна в метрах
+    count_pool -- сколько раз пользователь переплыл бассейн
+    """
 
     LEN_STEP: float = 1.38
-    coeff_mean_speed_1: float = 1.1
-    coeff_mean_speed_2: float = 2
+    COEFF_MEAN_SPEED_1: float = 1.1
+    COEFF_MEAN_SPEED_2: float = 2
 
-    def __init__(self,
-                 action: int,
-                 duration: float,
-                 weight: float,
-                 length_pool: float,
-                 count_pool: float
-                 ) -> None:
-        super().__init__(action, duration, weight)
-        self.length_pool = length_pool
-        self.count_pool = count_pool
+    def __init__(self, data) -> None:
+        super().__init__(data[:3])
+        self.length_pool, self.count_pool = data[3:]
 
     def get_mean_speed(self) -> float:
         """Получить среднюю скорость движения."""
@@ -146,38 +155,30 @@ class Swimming(Training):
     def get_spent_calories(self) -> float:
         """Получить количество затраченных калорий."""
         mean_speed = self.get_mean_speed()
-        spent_calories = ((mean_speed + self.coeff_mean_speed_1)
-                          * self.coeff_mean_speed_2
+        spent_calories = ((mean_speed + self.COEFF_MEAN_SPEED_1)
+                          * self.COEFF_MEAN_SPEED_2
                           * self.weight)
         return spent_calories
 
 
-def read_package(workout_type: str, data: list) -> Training:
+def read_package(workout_type: str,
+                 data: Sequence[float]) -> Optional[Training]:
     """Прочитать данные полученные от датчиков."""
-    workout_types = {'SWM': Swimming,
-                     'RUN': Running,
-                     'WLK': SportsWalking
-                     }
-    if workout_type == 'SWM':
-        training = workout_types[workout_type](data[0],
-                                               data[1],
-                                               data[2],
-                                               data[3],
-                                               data[4])
-    elif workout_type == 'RUN':
-        training = workout_types[workout_type](data[0],
-                                               data[1],
-                                               data[2])
-    elif workout_type == 'WLK':
-        training = workout_types[workout_type](data[0],
-                                               data[1],
-                                               data[2],
-                                               data[3])
-    else:
-        training = Training(data[0],
-                            data[1],
-                            data[2])
-    return training
+    workout_types: Dict[str, Type[Training]] = {
+        'SWM': Swimming,
+        'RUN': Running,
+        'WLK': SportsWalking
+    }
+    try:
+        training = workout_types[workout_type](data)
+        return training
+    except KeyError:
+        print(f'Несуществующий тип тренировки: ""{workout_type}""')
+    except ValueError:
+        print(f'Неверное количество данных: '
+              f'Тренировка - "{workout_type}"; '
+              f'Данные - {data}')
+    return None
 
 
 def main(training: Training) -> None:
@@ -188,7 +189,7 @@ def main(training: Training) -> None:
 
 
 if __name__ == '__main__':
-    packages = [
+    packages: List[TrainingData] = [
         ('SWM', [720, 1, 80, 25, 40]),
         ('RUN', [15000, 1, 75]),
         ('WLK', [9000, 1, 75, 180]),
@@ -196,4 +197,5 @@ if __name__ == '__main__':
 
     for workout_type, data in packages:
         training = read_package(workout_type, data)
-        main(training)
+        if isinstance(training, Training):
+            main(training)
