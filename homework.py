@@ -1,11 +1,12 @@
 from dataclasses import dataclass
-from typing import ClassVar
-from typing import Dict
-from typing import List
-from typing import Optional
-from typing import Sequence
-from typing import Tuple
-from typing import Type
+from typing import (ClassVar,
+                    Dict,
+                    List,
+                    Optional,
+                    Sequence,
+                    Tuple,
+                    Type,
+                    Union)
 
 TrainingData = Tuple[str, Sequence[float]]
 # Тип данных тренировки
@@ -20,18 +21,14 @@ class InfoMessage:
     distance: float
     speed: float
     calories: float
-    message: ClassVar[str] = ('Тип тренировки: {}; '
-                              'Длительность: {:.3f} ч.; '
-                              'Дистанция: {:.3f} км; '
-                              'Ср. скорость: {:.3f} км/ч; '
-                              'Потрачено ккал: {:.3f}.')
+    message: ClassVar[str] = ('Тип тренировки: {training_type}; '
+                              'Длительность: {duration:.3f} ч.; '
+                              'Дистанция: {distance:.3f} км; '
+                              'Ср. скорость: {speed:.3f} км/ч; '
+                              'Потрачено ккал: {calories:.3f}.')
 
     def get_message(self) -> str:
-        format_message = self.message.format(self.training_type,
-                                             self.duration,
-                                             self.distance,
-                                             self.speed,
-                                             self.calories)
+        format_message = self.message.format(**self.__dict__)
         return format_message
 
 
@@ -44,9 +41,9 @@ class Training:
     weight -- вес спортсмена
     """
 
-    LEN_STEP: float = 0.65
-    M_IN_KM: float = 1000
-    MIN_IN_HOUR: float = 60
+    LEN_STEP = 0.65
+    M_IN_KM = 1000.0
+    MIN_IN_HOUR = 60.0
 
     def __init__(self, action, duration, weight) -> None:
         self.action, self.duration, self.weight = action, duration, weight
@@ -63,9 +60,9 @@ class Training:
 
     def get_spent_calories(self) -> float:
         """Получить количество затраченных калорий."""
-        raise NotImplementedError(
-            'Определите ""get_spent_calories()"" в %s.'
-            % (self.__class__.__name__))
+        classname = self.__class__.__name__
+        error_message = f'Определите "get_spent_calories()" в {classname}'
+        raise NotImplementedError(error_message)
 
     def show_training_info(self) -> InfoMessage:
         """Вернуть информационное сообщение о выполненной тренировке."""
@@ -84,8 +81,8 @@ class Training:
 class Running(Training):
     """Тренировка: бег."""
 
-    COEFF_MEAN_SPEED_1: float = 18
-    COEFF_MEAN_SPEED_2: float = 20
+    COEFF_MEAN_SPEED_1 = 18.0
+    COEFF_MEAN_SPEED_2 = 20.0
 
     def get_spent_calories(self) -> float:
         """Получить количество затраченных калорий."""
@@ -108,8 +105,8 @@ class SportsWalking(Training):
     height -- рост спортсмена
     """
 
-    COEFF_CALORIE_1: float = 0.035
-    COEFF_CALORIE_2: float = 0.029
+    COEFF_CALORIE_1 = 0.035
+    COEFF_CALORIE_2 = 0.029
 
     def __init__(self, action, duration, weight, height) -> None:
         super().__init__(action, duration, weight)
@@ -138,14 +135,20 @@ class Swimming(Training):
     count_pool -- сколько раз пользователь переплыл бассейн
     """
 
-    LEN_STEP: float = 1.38
-    COEFF_MEAN_SPEED_1: float = 1.1
-    COEFF_MEAN_SPEED_2: float = 2
+    LEN_STEP = 1.38
+    COEFF_MEAN_SPEED_1 = 1.1
+    COEFF_MEAN_SPEED_2 = 2
 
-    def __init__(self, action, duration, weight,
-                 length_pool, count_pool) -> None:
+    def __init__(self,
+                 action,
+                 duration,
+                 weight,
+                 length_pool,
+                 count_pool
+                 ) -> None:
         super().__init__(action, duration, weight)
-        self.length_pool, self.count_pool = length_pool, count_pool
+        self.length_pool = length_pool
+        self.count_pool = count_pool
 
     def get_mean_speed(self) -> float:
         """Получить среднюю скорость движения."""
@@ -162,24 +165,38 @@ class Swimming(Training):
         return spent_calories
 
 
+class TrainingNameErrorException(Exception):
+    '''Обработка ошибки типа тренировкаи'''
+
+    pass
+
+
+class TrainingDataErrorExcrption(Exception):
+    '''Обработка ошибки данных'''
+
+    pass
+
+
 def read_package(workout_type: str,
-                 data: Sequence[float]) -> Optional[Training]:
+                 data: Sequence[Union[int, float]]
+                 ) -> Optional[Training]:
     """Прочитать данные полученные от датчиков."""
     workout_types: Dict[str, Type[Training]] = {
         'SWM': Swimming,
         'RUN': Running,
-        'WLK': SportsWalking
+        'WLK': SportsWalking,
     }
+    key_error_message = f'Несуществующий тип тренировки: "{workout_type}"'
+    data_error_message = (f'Неверное количество данных: '
+                          f'Тренировка - "{workout_type}"; '
+                          f'Данные - {data}')
     try:
         training = workout_types[workout_type](*data)
         return training
     except KeyError:
-        print(f'Несуществующий тип тренировки: ""{workout_type}""')
+        raise TrainingNameErrorException(key_error_message)
     except ValueError:
-        print(f'Неверное количество данных: '
-              f'Тренировка - "{workout_type}"; '
-              f'Данные - {data}')
-    return None
+        raise TrainingDataErrorExcrption(data_error_message)
 
 
 def main(training: Training) -> None:
@@ -195,8 +212,12 @@ if __name__ == '__main__':
         ('RUN', [15000, 1, 75]),
         ('WLK', [9000, 1, 75, 180]),
     ]
-
+    error_message = 'Ошибка в данных тренировки: {}'
     for workout_type, data in packages:
-        training = read_package(workout_type, data)
-        if isinstance(training, Training):
-            main(training)
+        try:
+            training = read_package(workout_type, data)
+            if isinstance(training, Training):
+                main(training)
+        except (TrainingDataErrorExcrption,
+                TrainingNameErrorException) as ex:
+            print(error_message.format(ex))
