@@ -199,7 +199,7 @@ def read_package(workout_type: str,
         return training
     except KeyError:
         raise TrainingNameErrorException(key_error_message)
-    except ValueError:
+    except TypeError:
         raise TrainingDataErrorExcrption(data_error_message)
 
 
