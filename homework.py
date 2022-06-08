@@ -1,12 +1,16 @@
-from dataclasses import dataclass
-from typing import (ClassVar,
-                    Dict,
-                    List,
-                    Optional,
-                    Sequence,
-                    Tuple,
-                    Type,
-                    Union)
+from dataclasses import (
+    dataclass,
+    asdict
+)
+from typing import (
+    ClassVar,
+    Dict,
+    List,
+    Sequence,
+    Tuple,
+    Type,
+    Union
+)
 
 TrainingData = Tuple[str, Sequence[float]]
 # Тип данных тренировки
@@ -28,7 +32,7 @@ class InfoMessage:
                               'Потрачено ккал: {calories:.3f}.')
 
     def get_message(self) -> str:
-        format_message = self.message.format(**self.__dict__)
+        format_message = self.message.format(**asdict(self))
         return format_message
 
 
@@ -166,20 +170,20 @@ class Swimming(Training):
 
 
 class TrainingNameErrorException(Exception):
-    '''Обработка ошибки типа тренировкаи'''
+    """Обработка ошибки типа тренировки"""
 
     pass
 
 
 class TrainingDataErrorExcrption(Exception):
-    '''Обработка ошибки данных'''
+    """Обработка ошибки данных"""
 
     pass
 
 
 def read_package(workout_type: str,
                  data: Sequence[Union[int, float]]
-                 ) -> Optional[Training]:
+                 ) -> Training:
     """Прочитать данные полученные от датчиков."""
     workout_types: Dict[str, Type[Training]] = {
         'SWM': Swimming,
@@ -216,8 +220,8 @@ if __name__ == '__main__':
     for workout_type, data in packages:
         try:
             training = read_package(workout_type, data)
-            if isinstance(training, Training):
-                main(training)
         except (TrainingDataErrorExcrption,
                 TrainingNameErrorException) as ex:
             print(error_message.format(ex))
+        else:
+            main(training)
