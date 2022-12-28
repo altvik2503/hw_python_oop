@@ -6,7 +6,7 @@
 
  - клонирование репозитория:
 ```
-https://github.com/altvik2503/hw_python_oop.git
+git clone https://github.com/altvik2503/hw_python_oop.git
 ```
  - переход в папку проекта:
 ```
